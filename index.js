@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs')
 
 const db = require('./database/dbConfig.js');
 const Users = require('./users/users-model.js');
+const restricted = require('./auth/auth-middeware.js')
 
 const server = express();
 
@@ -36,7 +37,7 @@ server.post('/api/login', (req, res) => {
   Users.findBy({ username })
     .first()
     .then(user => {
-        if(bcrypt.compareSync(password, user.password)){
+        if(user && bcrypt.compareSync(password, user.password)){
         res.status(200).json({ message: `Welcome ${user.username}!` })
       } else {
         res.status(401).json({ message: 'Invalid Credentials' });
@@ -47,7 +48,7 @@ server.post('/api/login', (req, res) => {
     });
 });
 
-server.get('/api/users', (req, res) => {
+server.get('/api/users',restricted,  (req, res) => {
   Users.find()
     .then(users => {
       res.json(users);
@@ -67,3 +68,13 @@ server.get('/hash', (req, res) => {
 
 const port = process.env.PORT || 5000;
 server.listen(port, () => console.log(`\n** Running on port ${port} **\n`));
+
+
+
+/*
+write a middleware that will check for the username and password
+and let the rqeuest continue to /api/users if the credentials are good
+return a 401 if the credentials are invalid
+
+use the middleware to restrict access to the get /api/users endpoint
+*/
